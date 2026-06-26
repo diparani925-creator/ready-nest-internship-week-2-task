@@ -1,0 +1,102 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("student")
+  avatar    String   @default("avatar1")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timetables  Timetable[]
+  attendances Attendance[]
+  notes       Note[]
+  notices     Notice[]     @relation("AuthorNotices")
+  tasks       Task[]
+}
+
+model Timetable {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject   String
+  room      String   @default("")
+  teacher   String   @default("")
+  dayOfWeek String
+  startTime String
+  endTime   String
+  color     String   @default("#0d9488")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject   String
+  status    String
+  date      DateTime
+  note      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([studentId, subject, date])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   @db.Text
+  tags      Json
+  color     String   @default("#fef08a")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+}
+
+model Notice {
+  id               String   @id @default(uuid())
+  authorId         String
+  author           User     @relation("AuthorNotices", fields: [authorId], references: [id], onDelete: Cascade)
+  authorName       String
+  title            String
+  content          String   @db.Text
+  targetDepartment String   @default("All")
+  pinned           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([authorId])
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @db.Text
+  dueDate     DateTime
+  completed   Boolean  @default(false)
+  priority    String   @default("medium")
+  attachments Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId])
+}
